@@ -2,7 +2,7 @@ name: Fund NAV Notify
 
 on:
   schedule:
-    - cron: "0 7 * * *"  # 每天21:00(中国时区), UTC+0=13点
+    - cron: "56 9 * * *"  # 每天21:00(中国时区), UTC+0=13点
   workflow_dispatch: {}  # 手动触发
 
 jobs:
