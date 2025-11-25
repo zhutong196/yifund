@@ -1,0 +1,39 @@
+name: Fund NAV Notify
+
+on:
+  schedule:
+    - cron: "0 7 * * *"  # 每天21:00(中国时区), UTC+0=13点
+  workflow_dispatch: {}  # 手动触发
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Call Fund API
+      run: |
+        echo "Sending request..."
+        RESPONSE=$(curl -s -X POST "https://api.efunds.com.cn/xcowch/front/fund/nav" \
+          -H "Content-Type: application/json" \
+          -d '{"fundCode":"012922","pageIndex":0,"pageSize":1,"startDate":"2022-11-17","endDate":"2025-11-30","siteID":"1"}')
+        
+        NAV=$(echo $RESPONSE | jq -r '.data.dataList[0].dwjz')
+        DATE=$(echo $RESPONSE | jq -r '.data.dataList[0].fsrq')
+        
+        echo "NAV=$NAV" >> $GITHUB_ENV
+        echo "DATE=$DATE" >> $GITHUB_ENV
+
+    - name: Send Email
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.163.com  # 替换成你的邮箱服务
+        server_port: 465
+        username: ${{ secrets.MAIL_USER }}
+        password: ${{ secrets.MAIL_PASS }}
+        subject: "基金012922最新净值: ¥${{ env.NAV }}"
+        to: ${{ secrets.MAIL_TO }}
+        from: ${{ secrets.MAIL_USER }}
+        body: |
+          基金净值已更新📈
+          日期：${{ env.DATE }}
+          净值：${{ env.NAV }}
+          数据来源：易方达基金
